@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Booking - SalonEase</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="logo">
+      <h2>SalonEase</h2>
+      <p>Beauty & Care</p>
+    </div>
+
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="services.html">Services</a>
+      <a href="#">About Us</a>
+      <a href="#">Contact</a>
+    </div>
+
+    <div class="nav-buttons">
+      <a href="login.html" class="btn-outline">Login</a>
+      <a href="register.html" class="btn-dark">Register</a>
+    </div>
+  </nav>
+
+  <section class="form-section">
+    <div class="form-box">
+      <h1>Book Appointment</h1>
+      <p>Choose your stylist, date, and time.</p>
+
+      <div id="serviceInfo" class="booking-summary"></div>
+
+      <form id="bookingForm">
+        <label>Choose Stylist</label>
+        <select id="stylist_id" required>
+          <option value="">Loading stylists...</option>
+        </select>
+
+        <label>Booking Date</label>
+        <input type="date" id="booking_date" required>
+
+        <label>Booking Time</label>
+        <input type="time" id="booking_time" required>
+
+        <button type="submit" class="btn-dark full-btn">Confirm Booking</button>
+      </form>
+
+      <p id="message" class="message"></p>
+    </div>
+  </section>
+
+  <script src="js/api.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const serviceId = params.get("service_id");
+
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    const serviceInfo = document.getElementById("serviceInfo");
+    const stylistSelect = document.getElementById("stylist_id");
+    const bookingForm = document.getElementById("bookingForm");
+    const message = document.getElementById("message");
+
+    if (!serviceId) {
+      serviceInfo.innerHTML = "<p>No service selected.</p>";
+    } else {
+      fetch(`${API_BASE_URL}/api/services/${serviceId}`)
+        .then(response => response.json())
+        .then(service => {
+          serviceInfo.innerHTML = `
+            <h3>${service.service_name}</h3>
+            <p>${service.description}</p>
+            <p><strong>Price:</strong> Rp ${Number(service.price).toLocaleString("id-ID")}</p>
+            <p><strong>Duration:</strong> ${service.duration} minutes</p>
+          `;
+        })
+        .catch(error => {
+          serviceInfo.innerHTML = "<p>Failed to load service detail.</p>";
+        });
+    }
+
+    fetch(`${API_BASE_URL}/api/stylists`)
+      .then(response => response.json())
+      .then(stylists => {
+        stylistSelect.innerHTML = '<option value="">Choose stylist</option>';
+
+        stylists.forEach(stylist => {
+          stylistSelect.innerHTML += `
+            <option value="${stylist.stylist_id}">
+              ${stylist.stylist_name} - ${stylist.specialization} (${stylist.rating})
+            </option>
+          `;
+        });
+      })
+      .catch(error => {
+        stylistSelect.innerHTML = '<option value="">Failed to load stylists</option>';
+      });
+
+    bookingForm.addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      const data = {
+        user_id: user ? user.user_id : 1,
+        service_id: serviceId,
+        stylist_id: document.getElementById("stylist_id").value,
+        booking_date: document.getElementById("booking_date").value,
+        booking_time: document.getElementById("booking_time").value
+      };
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/bookings`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        message.textContent = result.message;
+
+        if (response.ok) {
+          setTimeout(() => {
+            window.location.href = "confirmation.html";
+          }, 1000);
+        }
+      } catch (error) {
+        message.textContent = "Booking failed. Please try again.";
+      }
+    });
+  </script>
+
+</body>
+</html>
