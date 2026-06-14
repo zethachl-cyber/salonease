@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Services - SalonEase</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="logo">
+      <h2>SalonEase</h2>
+      <p>Beauty & Care</p>
+    </div>
+
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="services.html">Services</a>
+      <a href="#">About Us</a>
+      <a href="#">Contact</a>
+    </div>
+
+    <div class="nav-buttons">
+      <a href="login.html" class="btn-outline">Login</a>
+      <a href="register.html" class="btn-dark">Register</a>
+    </div>
+  </nav>
+
+  <section class="page-header">
+    <h1>Our Services</h1>
+    <p>Choose the best beauty service for you.</p>
+  </section>
+
+  <section class="services-section">
+    <div id="servicesList" class="service-grid"></div>
+  </section>
+
+  <footer>
+    <p>© 2026 SalonEase. All rights reserved.</p>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script>
+    const servicesList = document.getElementById("servicesList");
+
+    fetch(`${API_BASE_URL}/api/services`)
+      .then(response => response.json())
+      .then(services => {
+        servicesList.innerHTML = "";
+
+        services.forEach(service => {
+          servicesList.innerHTML += `
+            <div class="service-card">
+              <h3>${service.service_name}</h3>
+              <p>${service.description}</p>
+              <p><strong>Price:</strong> Rp ${Number(service.price).toLocaleString("id-ID")}</p>
+              <p><strong>Duration:</strong> ${service.duration} minutes</p>
+              <a href="booking.html?service_id=${service.service_id}" class="btn-dark">Book This Service</a>
+            </div>
+          `;
+        });
+      })
+      .catch(error => {
+        servicesList.innerHTML = "<p>Failed to load services.</p>";
+        console.error(error);
+      });
+  </script>
+
+</body>
+</html>
