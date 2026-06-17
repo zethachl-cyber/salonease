@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - SalonEase</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="logo">
+      <h2>SalonEase</h2>
+      <p>Beauty & Care</p>
+    </div>
+
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="services.html">Services</a>
+      <a href="dashboard.html">Dashboard</a>
+      <a href="contact.html">Contact</a>
+    </div>
+
+    <div id="userMenu" class="nav-buttons"></div>
+  </nav>
+
+  <section class="page-header">
+    <h1>My Dashboard</h1>
+    <p>View your profile and booking history.</p>
+  </section>
+
+  <section class="dashboard-grid">
+    <div class="profile-card">
+      <h2>Profile</h2>
+      <p><strong>Name:</strong> <span id="profileName"></span></p>
+      <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+      <p><strong>Role:</strong> Customer</p>
+      <br>
+      <a href="services.html" class="btn-dark">Book New Service</a>
+    </div>
+
+    <div class="booking-list">
+      <h2>Booking History</h2>
+      <div id="bookingHistory"></div>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2026 SalonEase. All rights reserved.</p>
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script>
+    const user = getCurrentUser();
+    const bookingHistory = document.getElementById("bookingHistory");
+
+    if (!user) {
+      window.location.href = "login.html";
+    }
+
+    document.getElementById("profileName").textContent = user.full_name;
+    document.getElementById("profileEmail").textContent = user.email;
+
+    fetch(`${API_BASE_URL}/api/my-bookings/${user.user_id}`)
+      .then(response => response.json())
+      .then(bookings => {
+        if (bookings.length === 0) {
+          bookingHistory.innerHTML = "<p>You do not have any bookings yet.</p>";
+          return;
+        }
+
+        bookingHistory.innerHTML = "";
+
+        bookings.forEach(booking => {
+          bookingHistory.innerHTML += `
+            <div class="booking-item">
+              <h3>${booking.service_name}</h3>
+              <p><strong>Stylist:</strong> ${booking.stylist_name}</p>
+              <p><strong>Date:</strong> ${booking.booking_date}</p>
+              <p><strong>Time:</strong> ${booking.booking_time}</p>
+              <p><strong>Price:</strong> ${formatRupiah(booking.price)}</p>
+              <span class="status">${booking.status}</span>
+            </div>
+          `;
+        });
+      })
+      .catch(() => {
+        bookingHistory.innerHTML = "<p>Failed to load booking history.</p>";
+      });
+  </script>
+
+</body>
+</html>

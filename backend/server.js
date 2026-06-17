@@ -390,6 +390,39 @@ app.get("/api/reset-database", async (req, res) => {
     });
   }
 });
+// GET BOOKING HISTORY BY USER
+app.get("/api/my-bookings/:user_id", async (req, res) => {
+  try {
+    const { user_id } = req.params;
+
+    const [bookings] = await db.query(
+      `
+      SELECT 
+        b.booking_id,
+        DATE_FORMAT(b.booking_date, '%Y-%m-%d') AS booking_date,
+        TIME_FORMAT(b.booking_time, '%H:%i') AS booking_time,
+        b.status,
+        s.service_name,
+        s.price,
+        s.duration,
+        st.stylist_name
+      FROM bookings b
+      JOIN services s ON b.service_id = s.service_id
+      JOIN stylists st ON b.stylist_id = st.stylist_id
+      WHERE b.user_id = ?
+      ORDER BY b.booking_date DESC, b.booking_time DESC
+      `,
+      [user_id]
+    );
+
+    res.json(bookings);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch booking history",
+      error: error.message
+    });
+  }
+});
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {

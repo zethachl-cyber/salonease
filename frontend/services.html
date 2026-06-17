@@ -17,22 +17,30 @@
     <div class="nav-links">
       <a href="index.html">Home</a>
       <a href="services.html">Services</a>
-      <a href="#">About Us</a>
-      <a href="#">Contact</a>
+      <a href="about.html">About Us</a>
+      <a href="contact.html">Contact</a>
     </div>
 
-    <div class="nav-buttons">
-      <a href="login.html" class="btn-outline">Login</a>
-      <a href="register.html" class="btn-dark">Register</a>
-    </div>
+    <div id="userMenu" class="nav-buttons"></div>
   </nav>
 
   <section class="page-header">
     <h1>Our Services</h1>
-    <p>Choose the best beauty service for you.</p>
+    <p>Search and choose the best salon service for your appointment.</p>
   </section>
 
-  <section class="services-section">
+  <section class="filter-box">
+    <input type="text" id="searchInput" placeholder="Search service name...">
+
+    <select id="priceFilter">
+      <option value="all">All Prices</option>
+      <option value="75000">Under Rp 75.000</option>
+      <option value="100000">Under Rp 100.000</option>
+      <option value="150000">Under Rp 150.000</option>
+    </select>
+  </section>
+
+  <section class="section">
     <div id="servicesList" class="service-grid"></div>
   </section>
 
@@ -43,28 +51,53 @@
   <script src="js/api.js"></script>
   <script>
     const servicesList = document.getElementById("servicesList");
+    const searchInput = document.getElementById("searchInput");
+    const priceFilter = document.getElementById("priceFilter");
+
+    let allServices = [];
+
+    function renderServices() {
+      const keyword = searchInput.value.toLowerCase();
+      const maxPrice = priceFilter.value;
+
+      let filteredServices = allServices.filter(service => {
+        const nameMatch = service.service_name.toLowerCase().includes(keyword);
+        const priceMatch = maxPrice === "all" || Number(service.price) <= Number(maxPrice);
+        return nameMatch && priceMatch;
+      });
+
+      if (filteredServices.length === 0) {
+        servicesList.innerHTML = "<p>No service found.</p>";
+        return;
+      }
+
+      servicesList.innerHTML = "";
+
+      filteredServices.forEach(service => {
+        servicesList.innerHTML += `
+          <div class="service-card">
+            <span class="badge">${service.duration} minutes</span>
+            <h3>${service.service_name}</h3>
+            <p>${service.description}</p>
+            <p class="price">${formatRupiah(service.price)}</p>
+            <a href="booking.html?service_id=${service.service_id}" class="btn-dark">Book This Service</a>
+          </div>
+        `;
+      });
+    }
 
     fetch(`${API_BASE_URL}/api/services`)
       .then(response => response.json())
       .then(services => {
-        servicesList.innerHTML = "";
-
-        services.forEach(service => {
-          servicesList.innerHTML += `
-            <div class="service-card">
-              <h3>${service.service_name}</h3>
-              <p>${service.description}</p>
-              <p><strong>Price:</strong> Rp ${Number(service.price).toLocaleString("id-ID")}</p>
-              <p><strong>Duration:</strong> ${service.duration} minutes</p>
-              <a href="booking.html?service_id=${service.service_id}" class="btn-dark">Book This Service</a>
-            </div>
-          `;
-        });
+        allServices = services;
+        renderServices();
       })
-      .catch(error => {
+      .catch(() => {
         servicesList.innerHTML = "<p>Failed to load services.</p>";
-        console.error(error);
       });
+
+    searchInput.addEventListener("input", renderServices);
+    priceFilter.addEventListener("change", renderServices);
   </script>
 
 </body>

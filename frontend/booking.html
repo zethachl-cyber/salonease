@@ -17,20 +17,17 @@
     <div class="nav-links">
       <a href="index.html">Home</a>
       <a href="services.html">Services</a>
-      <a href="#">About Us</a>
-      <a href="#">Contact</a>
+      <a href="about.html">About Us</a>
+      <a href="contact.html">Contact</a>
     </div>
 
-    <div class="nav-buttons">
-      <a href="login.html" class="btn-outline">Login</a>
-      <a href="register.html" class="btn-dark">Register</a>
-    </div>
+    <div id="userMenu" class="nav-buttons"></div>
   </nav>
 
   <section class="form-section">
     <div class="form-box">
       <h1>Book Appointment</h1>
-      <p>Choose your stylist, date, and time.</p>
+      <p>Choose your stylist, date, and appointment time.</p>
 
       <div id="serviceInfo" class="booking-summary"></div>
 
@@ -53,17 +50,25 @@
     </div>
   </section>
 
+  <footer>
+    <p>© 2026 SalonEase. All rights reserved.</p>
+  </footer>
+
   <script src="js/api.js"></script>
   <script>
     const params = new URLSearchParams(window.location.search);
     const serviceId = params.get("service_id");
-
-    const user = JSON.parse(localStorage.getItem("user"));
+    const user = getCurrentUser();
 
     const serviceInfo = document.getElementById("serviceInfo");
     const stylistSelect = document.getElementById("stylist_id");
     const bookingForm = document.getElementById("bookingForm");
     const message = document.getElementById("message");
+
+    if (!user) {
+      bookingForm.style.display = "none";
+      message.innerHTML = `Please login first before booking. <br><br><a href="login.html" class="btn-dark">Login Now</a>`;
+    }
 
     if (!serviceId) {
       serviceInfo.innerHTML = "<p>No service selected.</p>";
@@ -71,14 +76,16 @@
       fetch(`${API_BASE_URL}/api/services/${serviceId}`)
         .then(response => response.json())
         .then(service => {
+          if (Array.isArray(service)) service = service[0];
+
           serviceInfo.innerHTML = `
             <h3>${service.service_name}</h3>
             <p>${service.description}</p>
-            <p><strong>Price:</strong> Rp ${Number(service.price).toLocaleString("id-ID")}</p>
+            <p><strong>Price:</strong> ${formatRupiah(service.price)}</p>
             <p><strong>Duration:</strong> ${service.duration} minutes</p>
           `;
         })
-        .catch(error => {
+        .catch(() => {
           serviceInfo.innerHTML = "<p>Failed to load service detail.</p>";
         });
     }
@@ -96,7 +103,7 @@
           `;
         });
       })
-      .catch(error => {
+      .catch(() => {
         stylistSelect.innerHTML = '<option value="">Failed to load stylists</option>';
       });
 
@@ -104,7 +111,7 @@
       event.preventDefault();
 
       const data = {
-        user_id: user ? user.user_id : 1,
+        user_id: user.user_id,
         service_id: serviceId,
         stylist_id: document.getElementById("stylist_id").value,
         booking_date: document.getElementById("booking_date").value,
